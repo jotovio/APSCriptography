@@ -27,7 +27,16 @@ git commit -m "Descrição do que foi feito".
 git push origin nome-da-branch.
 
 
+## Para o colaborador visualizar as novas alterações
 
+1. Vá até a pasta do projeto no seu computador:
+cd nome-do-projeto
+
+2. Certifique-se de que você está na branch main
+git checkout main (Neste comando, você sai da sua branch e vai para a principal, então cuidado.)
+
+3. Baixe as atualizações do repositório remoto (GitHub):
+git pull origin main
 
 ## Observações importantes
 
