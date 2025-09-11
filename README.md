@@ -46,7 +46,7 @@ git pull origin main
 
 
 
-## Explicação linha a linha
+# Explicação linha a linha
 
 1 from Crypto.PublicKey import RSA
 Importa a classe/funções para gerar e manipular chaves RSA (PyCryptodome).
@@ -84,11 +84,11 @@ Cria/obtém o objeto de chave pública a partir da chave privada (o objeto publi
 22-23 decifra com a chave privada e imprime a string original.
 
 
-## Explicação detalhada dos termos mencionados
+# Explicação detalhada dos termos mencionados
 
 Vou explicar cada ! com um pouco mais de técnica, mas simples.
 
-# RSA.generate(2048)
+## RSA.generate(2048)
 
 O que faz: cria um novo par de chaves RSA (privada + pública) com o número de bits indicado (2048).
 
@@ -96,13 +96,13 @@ Por trás dos panos (resumido): a função gera dois números primos grandes p e
 
 Observação prática: 2048 bits é um tamanho comumente considerado seguro hoje para muitos usos; a geração pode levar um pouco de tempo dependendo da máquina.
 
-# key.publickey()
+## key.publickey()
 
 O que retorna: a chave pública correspondente ao objeto de chave privada key.
 
 Por que usar: muitas operações (criptografar com RSA) usam somente a pública — quem tem a privada pode decifrar. key contém ambos; key.publickey() fornece só a parte pública (útil para enviar a terceiros).
 
-# PKCS1_OAEP.new(...)
+## PKCS1_OAEP.new(...)
 
 O que é: cria um objeto de cifra que implementa o padding OAEP (Optimal Asymmetric Encryption Padding) junto com RSA.
 
@@ -110,23 +110,23 @@ Por que padding existe: RSA puro (apenas matemática m^e mod n) é vulnerável a
 
 O que você passa a new(...): a chave (pública para encrypt, privada para decrypt) — o objeto resultante tem métodos encrypt/decrypt.
 
-# cipher.encrypt(...)
+## cipher.encrypt(...)
 
 O que faz: cifra os bytes passados, retornando bytes cifrados.
 
 Importante: existe um tamanho máximo de dados que cabem numa única operação RSA+OAEP — se a mensagem for maior que esse limite, encrypt vai lançar ValueError. Por isso, em sistemas reais usa-se hybrid encryption: RSA cifra apenas uma chave simétrica e essa chave cifra a mensagem inteira (ex.: AES/Fernet).
 
-# mensagem.encode()
+## mensagem.encode()
 
 O que faz: converte a string Python (tipo str) para bytes (tipo bytes). Por padrão usa UTF-8. Ex.: "Olá".encode() → b'Ol\xc3\xa1'.
 
 Por que necessário: funções de cifra trabalham com bytes, não com str.
 
-# cipher.decrypt(...)
+## cipher.decrypt(...)
 
 O que faz: pega os bytes cifrados e aplica a operação de decifragem (verifica padding OAEP e reverte a exponenciação modular), retornando os bytes originais da mensagem.
 
-# .decode()
+## .decode()
 
 O que faz: converte bytes para str usando UTF-8 por padrão. Assim b'Olá'.decode() → "Olá".
 
