@@ -8,7 +8,7 @@ def gerar_chaves(bits: int = 2048):
     """Gera um par de chaves RSA (privada + pública) e retorna (priv, pub)."""
     chave_priv = RSA.generate(bits)
     chave_pub = chave_priv.publickey()
-    return chave_priv, chave_pub
+    return chave_priv, chave_pub 
 
 
 def criptografar_texto(texto: str, chave_publica: RSA.RsaKey) -> str:
@@ -20,11 +20,12 @@ def criptografar_texto(texto: str, chave_publica: RSA.RsaKey) -> str:
     bytes_cifrados = cipher.encrypt(texto.encode("utf-8")) # ! utf-8
     return base64.b64encode(bytes_cifrados).decode("utf-8")  # ! retorna base64 (texto)
 
+
 def descriptografar_texto(b64_cifrado: str, chave_privada: RSA.RsaKey) -> str:
     """Descriptografa um texto em base64 usando a chave privada e retorna a string original."""
-    cipher = PKCS1_OAEP.new(chave_privada)
-    bytes_cifrados = base64.b64decode(b64_cifrado.encode("utf-8"))
-    bytes_originais = cipher.decrypt(bytes_cifrados)
+    cipher = PKCS1_OAEP.new(chave_privada) 
+    bytes_cifrados = base64.b64decode(b64_cifrado.encode("utf-8")) # ! b64_cifrado.encode
+    bytes_originais = cipher.decrypt(bytes_cifrados) 
     return bytes_originais.decode("utf-8")
 
 # ---------- Exemplo de uso (interface simples) ----------
@@ -32,9 +33,6 @@ if __name__ == "__main__":
     # 1) Gerar chaves (ou você poderia carregar de arquivos com carregar_chave_pem)
     private_key, public_key = gerar_chaves()
 
-    # Opcional: salvar em arquivos para reutilizar depois
-    # salvar_chave_pem(private_key, "private.pem")   # com senha: salvar_chave_pem(private_key, "private.pem", b"minha_senha")
-    # salvar_chave_pem(public_key,  "public.pem")
 
     # 2) Ler mensagem do usuário
 
@@ -56,3 +54,6 @@ if __name__ == "__main__":
         iniciar = input("\nDeseja criptografar outra mensagem? (s/n): ").strip().lower()
 
     print("Encerrando o programa.")
+
+
+    # ? Criar código que pergunta se deseja criptografar ou descriptografar
