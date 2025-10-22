@@ -1,6 +1,7 @@
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_OAEP
 import base64
+from typing import Optional
 
 # ---------- Funções úteis ----------
 
@@ -30,30 +31,69 @@ def descriptografar_texto(b64_cifrado: str, chave_privada: RSA.RsaKey) -> str:
 
 # ---------- Exemplo de uso (interface simples) ----------
 if __name__ == "__main__":
-    # 1) Gerar chaves (ou você poderia carregar de arquivos com carregar_chave_pem)
     private_key, public_key = gerar_chaves()
 
-
-    # 2) Ler mensagem do usuário
+    # guarda a última mensagem cifrada na sessão (None se não houver)
+    last_arquivo: Optional[str] = None
+    cifrada_b64: Optional[str] = None
 
     iniciar = input("Deseja criptografar uma mensagem? (s/n): ").strip().lower()
 
     while iniciar == 's':
+        print("""
+                Criptografia em RSA-OAEP
+                Criptografar - 1
+                Decriptografar - 2
+                Sair - 3
+              """ + 20*"-")
+        
+        input_opcao = input("Escolha uma opção (1/2/3): ").strip()
 
-        mensagem = input("Digite a mensagem a ser criptografada: ").strip()
+        # ! salvar mensagem original (substitui/ou cria o arquivo)
 
-    # 3) Criptografar
-        cifrada_b64 = criptografar_texto(mensagem, public_key)
-        print("\n🔒 Mensagem criptografada (base64):")
-        print(cifrada_b64)
+        if input_opcao == '1':
+            arquivo = input("Digite o nome do arquivo para salvar a mensagem criptografada: ").strip()
+            last_arquivo = arquivo
 
-    # 4) Descriptografar (para demonstrar)
-        decifrada = descriptografar_texto(cifrada_b64, private_key)
-        print("\n🔓 Mensagem decifrada:")
-        print(decifrada)
-        iniciar = input("\nDeseja criptografar outra mensagem? (s/n): ").strip().lower()
+            mensagem = input("Digite a mensagem a ser criptografada: ").strip()
 
-    print("Encerrando o programa.")
+            # salvar mensagem original (substitui/ou cria o arquivo)
+            with open(arquivo, "w", encoding="utf-8") as f:
+                f.write("Mensagem original:\n")
+                f.write(mensagem + "\n\n")
+
+            cifrada_b64 = criptografar_texto(mensagem, public_key)
+            print("\n🔒 Mensagem criptografada (base64):")
+            print(cifrada_b64)
+
+            # acrescentar a versão criptografada ao arquivo
+            with open(arquivo, "a", encoding="utf-8") as f:
+                f.write("Mensagem criptografada (base64):\n")
+                f.write(cifrada_b64 + "\n\n")
+
+        elif input_opcao == '2':
+            # Sem verificação de arquivo: apenas avisar se não houver mensagem cifrada
+            if cifrada_b64 is None:
+                print("Nenhuma mensagem criptografada disponível. Não é possível realizar a descriptografia.")
+            else:
+                try:
+                    decifrada = descriptografar_texto(cifrada_b64, private_key)
+                except Exception as e:
+                    print("Erro ao descriptografar:", e)
+                else:
+                    print("\n🔓 Mensagem decifrada:")
+                    print(decifrada)
+
+                    with open(arquivo, "a", encoding="utf-8") as f:
+                        f.write("Mensagem decifrada:\n")
+                        f.write(decifrada + "\n")
+                niciar = input("\nDeseja criptografar outra mensagem? (s/n): ").strip().lower()
+        elif input_opcao == '3':
+            break
+
+print("Encerrando o programa.")
 
 
     # ? Criar código que pergunta se deseja criptografar ou descriptografar
+
+    # guarda o último arquivo usado (evita pedir sempre ao decifrar)
