@@ -11,7 +11,7 @@ def criptografar(mensagem, chave_publica):
     cipher = PKCS1_OAEP.new(chave_publica)  # ! PKCS1_OAEP.new
     return cipher.encrypt(mensagem.encode()) # ! cipher.encrypt , mensagem.encode()
 
-# --- Descriptografar ---
+# --- Descriptografar --
 def descriptografar(criptografada, chave_privada):
     cipher = PKCS1_OAEP.new(chave_privada) 
     return cipher.decrypt(criptografada).decode() # ! cipher.decrypt , .decode()
