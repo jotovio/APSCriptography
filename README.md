@@ -48,86 +48,339 @@ git pull origin main
 
 # Explicação linha a linha
 
-1 from Crypto.PublicKey import RSA
-Importa a classe/funções para gerar e manipular chaves RSA (PyCryptodome).
+## Cabeçalho / imports
 
-2 from Crypto.Cipher import PKCS1_OAEP
-Importa o esquema de cifra/decifra com padding OAEP (implementação pronta na biblioteca).
+1. from Crypto.PublicKey import RSA
 
-4 key = RSA.generate(2048)
-Gera um par de chaves RSA (privada + pública) com tamanho de 2048 bits — tudo em memória. (Detalhes abaixo.)
+    from ... import ... — sintaxe para trazer um nome específico de um módulo.
 
-5 private_key = key
-A referência key gerada contém a chave privada; aqui você só está nomeando-a private_key.
+    Crypto.PublicKey — pacote do PyCryptodome que trata chaves públicas/privadas.
 
-6 public_key = key.publickey()
-Cria/obtém o objeto de chave pública a partir da chave privada (o objeto public_key contém n e e, não d).
+    RSA — classe que implementa operações de RSA (gerar chave, importar/exportar, etc.).
 
-8-10 definição criptografar(mensagem, chave_publica)
+2. from Crypto.Cipher import PKCS1_OAEP
 
-9 cria um objeto cipher que usa OAEP + a chave pública.
+    Crypto.Cipher — pacote de cifras (algoritmos de criptografia).
 
-10 chama cipher.encrypt(...) recebendo mensagem.encode() (string → bytes) e retorna os bytes cifrados.
+    PKCS1_OAEP — esquema de padding/encapsulamento para RSA (OAEP = Optimal Asymmetric Encryption Padding). Garante segurança adicional ao cifrar com RSA.
 
-12-14 definição descriptografar(criptografada, chave_privada)
+3. import base64
 
-13 cria um cipher OAEP com a chave privada.
+    base64 — módulo que converte bytes em uma representação ASCII (e.g. para imprimir/colar): b64encode e b64decode.
 
-14 cipher.decrypt(...) decifra os bytes e .decode() converte de volta para string.
+4. from typing import Optional
 
-16-17 bloco principal — lê msg do usuário.
+    typing — módulo para anotações de tipos (útil para documentação e IDEs).
 
-19 chama criptografar passando a mensagem e a chave pública, recebe bytes cifrados.
+    Optional[...] — indica que uma variável pode ser do tipo especificado ou None.
 
-20 mostra os bytes cifrados no terminal (conteúdo binário).
+5. import os
 
-22-23 decifra com a chave privada e imprime a string original.
+    os — módulo da biblioteca padrão para interagir com o sistema operacional (arquivos, caminhos, variáveis de ambiente, etc.).
 
 
-# Explicação detalhada dos termos mencionados
+## Definição de função: gerar_chaves
 
-Vou explicar cada ! com um pouco mais de técnica, mas simples.
+1. def gerar_chaves(bits: int = 2048):
 
-## RSA.generate(2048)
+    def — declara uma função.
 
-O que faz: cria um novo par de chaves RSA (privada + pública) com o número de bits indicado (2048).
+    bits: int = 2048 — anotação de tipo dizendo que bits é int e valor padrão é 2048.
 
-Por trás dos panos (resumido): a função gera dois números primos grandes p e q, calcula n = p*q, calcula phi = (p-1)*(q-1) e escolhe e e d que satisfazem as propriedades do RSA. Tudo pronto e seguro (para uso didático/produto) se o tamanho for adequado.
+    Docstring (entre """ ... """) — explicação da função; usada também por ferramentas/IDE.
 
-Observação prática: 2048 bits é um tamanho comumente considerado seguro hoje para muitos usos; a geração pode levar um pouco de tempo dependendo da máquina.
+2. chave_priv = RSA.generate(bits)
 
-## key.publickey()
+    RSA.generate(bits) — cria uma chave RSA privada cujo módulo tem bits bits (ex.: 2048).
 
-O que retorna: a chave pública correspondente ao objeto de chave privada key.
+    chave_priv — objeto que representa a chave privada.
 
-Por que usar: muitas operações (criptografar com RSA) usam somente a pública — quem tem a privada pode decifrar. key contém ambos; key.publickey() fornece só a parte pública (útil para enviar a terceiros).
+3. chave_pub = chave_priv.publickey()
 
-## PKCS1_OAEP.new(...)
+    .publickey() — método do objeto chave privada que gera a chave pública correspondente.
 
-O que é: cria um objeto de cifra que implementa o padding OAEP (Optimal Asymmetric Encryption Padding) junto com RSA.
+4. return chave_priv, chave_pub
 
-Por que padding existe: RSA puro (apenas matemática m^e mod n) é vulnerável a vários ataques. OAEP mistura a mensagem com dados aleatórios e aplica um esquema de máscara (MGF1) para tornar a cifragem probabilística e segura.
+    return — devolve uma tupla com a chave privada e pública.
 
-O que você passa a new(...): a chave (pública para encrypt, privada para decrypt) — o objeto resultante tem métodos encrypt/decrypt.
+## Função: criptografar_texto
 
-## cipher.encrypt(...)
+1. def criptografar_texto(texto: str, chave_publica: RSA.RsaKey) -> str:
 
-O que faz: cifra os bytes passados, retornando bytes cifrados.
+    texto: str — parâmetro texto com anotação de string.
 
-Importante: existe um tamanho máximo de dados que cabem numa única operação RSA+OAEP — se a mensagem for maior que esse limite, encrypt vai lançar ValueError. Por isso, em sistemas reais usa-se hybrid encryption: RSA cifra apenas uma chave simétrica e essa chave cifra a mensagem inteira (ex.: AES/Fernet).
+    chave_publica: RSA.RsaKey — anotação indicando que se espera um objeto de chave RSA.
 
-## mensagem.encode()
+    -> str — indica que a função retorna uma str (string).
 
-O que faz: converte a string Python (tipo str) para bytes (tipo bytes). Por padrão usa UTF-8. Ex.: "Olá".encode() → b'Ol\xc3\xa1'.
+2. cipher = PKCS1_OAEP.new(chave_publica)
 
-Por que necessário: funções de cifra trabalham com bytes, não com str.
+    PKCS1_OAEP.new(...) — cria um objeto cifra configurado para usar RSA-OAEP com a chave fornecida.
 
-## cipher.decrypt(...)
+    cipher — objeto que tem métodos encrypt/decrypt conforme o modo.
 
-O que faz: pega os bytes cifrados e aplica a operação de decifragem (verifica padding OAEP e reverte a exponenciação modular), retornando os bytes originais da mensagem.
+3. bytes_cifrados = cipher.encrypt(texto.encode("utf-8"))
 
-## .decode()
+    texto.encode("utf-8") — transforma a string em bytes usando UTF-8 (necessário para cifrar).
 
-O que faz: converte bytes para str usando UTF-8 por padrão. Assim b'Olá'.decode() → "Olá".
+    cipher.encrypt(...) — cifra os bytes; retorno são bytes cifrados.
 
-Por que usar: porque depois de decrypt você tem bytes; para imprimir/usar como texto precisa transformá-los em str.
+4. return base64.b64encode(bytes_cifrados).decode("utf-8")
+
+    base64.b64encode(...) — codifica bytes em base64 (retorna bytes).
+
+    .decode("utf-8") — converte os bytes base64 de volta para str para ser imprimível/colável.
+
+### Observação importante no docstring: RSA-OAEP só cifra mensagens curtas (limite relacionado ao tamanho da chave e padding).
+
+## Função: descriptografar_texto
+
+1. def descriptografar_texto(b64_cifrado: str, chave_privada: RSA.RsaKey) -> str:
+
+    b64_cifrado: str — espera o texto cifrado em base64 como str.
+
+    chave_privada — chave privada para descriptografia.
+
+2. cipher = PKCS1_OAEP.new(chave_privada)
+
+    Mesmo que antes, mas usando a chave privada (objeto cipher para decrypt).
+
+3. bytes_cifrados = base64.b64decode(b64_cifrado.encode("utf-8"))
+
+    .encode("utf-8") — transforma o base64 string em bytes.
+
+    base64.b64decode(...) — decodifica base64 para obter os bytes cifrados originais.
+
+4. bytes_originais = cipher.decrypt(bytes_cifrados)
+
+    cipher.decrypt(...) — descriptografa os bytes cifrados; retorna bytes originais (mensagem).
+
+5. return bytes_originais.decode("utf-8")
+
+    .decode("utf-8") — transforma bytes de volta em string legível.
+
+## Função: carregar_chave_privada
+
+1. def carregar_chave_privada(caminho: str) -> RSA.RsaKey:
+
+    caminho: str — caminho para o arquivo que contém a chave (PEM).
+
+    Função retorna um objeto RSA.RsaKey.
+
+2. with open(caminho, "rb") as f:
+
+    with — contexto que garante fechamento automático do arquivo.
+
+    open(..., "rb") — abre arquivo em modo binário para leitura (read + binary).
+
+    as f — f é o objeto arquivo.
+
+3. dados = f.read()
+
+    .read() — lê todo o conteúdo do arquivo (bytes).
+
+4. return RSA.import_key(dados)
+
+    RSA.import_key(...) — importa/parseia o conteúdo PEM (ou DER) e cria um objeto de chave RSA.
+
+## Função: importar_chave_privada_de_texto
+
+1. def importar_chave_privada_de_texto(pem_texto: str) -> RSA.RsaKey:
+
+    Recebe o conteúdo PEM já em string (colado pelo usuário).
+
+    pem_texto.encode("utf-8") — converte para bytes antes de RSA.import_key.
+
+## Função: ler_entrada_multilinha
+
+1. def ler_entrada_multilinha(prompt: str) -> str:
+
+    Lê várias linhas do terminal até uma linha vazia (útil para colar PEM completo).
+
+2. print(prompt) / print("(Finalize com uma linha vazia)") — instruções ao usuário.
+
+3. linhas = [] — lista para acumular linhas lidas.
+
+4. while True: — loop que continua até break.
+
+5. try: / except EOFError:
+
+    EOFError — exceção lançada quando não há mais entrada (Ctrl+D em Unix, por exemplo).
+
+    try/except — trata essa situação sem quebrar o programa.
+
+6. linha = input() — lê uma linha do usuário.
+
+7. if linha is None: — (praticamente redundante—input() nunca retorna None em uso normal) checa caso anormal.
+
+8. if linha.strip() == "":
+
+    .strip() — remove espaços em branco nas extremidades; se ficar vazio, é sinal de término (linha vazia).
+
+9. linhas.append(linha) — adiciona a linha lida à lista.
+
+10. return "\n".join(linhas)
+
+    "\n".join(...) — une todas as linhas com quebras de linha, retornando o texto completo.
+
+## Funções: salvar_chave_privada / salvar_chave_publica
+
+1. def salvar_chave_privada(chave_privada: RSA.RsaKey, caminho: str) -> None:
+
+    -> None — indica que não retorna nada.
+
+2. with open(caminho, "wb") as f:
+
+    open(..., "wb") — abre arquivo em modo binário escrita, sobrescrevendo/ criando. (w + b).
+
+3. f.write(chave_privada.export_key("PEM"))
+
+    .export_key("PEM") — converte a chave para o formato PEM (bytes).
+
+    f.write(...) — grava os bytes no arquivo.
+
+### O mesmo para salvar_chave_publica, mas com a chave pública.
+
+## Bloco principal de execução
+
+1. if __name__ == "__main__":
+
+    Verifica se o arquivo está sendo executado diretamente (não importado). Esse bloco só roda ao executar o script, não ao importá-lo como módulo.
+
+### Comentários explicativos seguem.
+
+2. last_arquivo: Optional[str] = None
+
+    Declaração de variável; Optional[str] indica que pode ser str ou None. Guarda o último arquivo usado.
+
+3. cifrada_b64: Optional[str] = None
+
+    Armazena a última mensagem cifrada em base64 (ou None se nada).
+
+4. iniciar = input("Deseja iniciar o programa? (s/n): ").strip().lower()
+
+    input(...) — lê string do usuário.
+
+    .strip() — remove espaços ao fim/início.
+
+    .lower() — converte para minúsculas (normaliza resposta).
+
+5. while iniciar == 's':
+
+    Loop que só ocorre se o usuário respondeu 's'.
+
+6. print(""" ... """ + 20*"-")
+
+    """ ... """ — string multilinha.
+
+    20*"-" — operador * repete a string "-" 20 vezes.
+
+7. input_opcao = input("Escolha uma opção (1/2/3/4): ").strip()
+
+    Lê a opção, tira espaços.
+
+## Opção 1 — gerar chaves + criptografar
+
+1. if input_opcao == '1': — ramo para criar chaves e criptografar.
+
+2. priv_path = input("Nome do arquivo para a chave privada (default: private.pem): ").strip() or "private.pem"
+
+    A expressão ... or "private.pem" retorna "private.pem" se a string à esquerda for vazia (útil para default).
+
+3. public_key = ... / private_key, public_key = gerar_chaves()
+
+    Chama gerar_chaves() e desempacota a tupla (privada, pública).
+
+4. salvar_chave_privada(private_key, priv_path) / salvar_chave_publica(public_key, pub_path)
+
+    Grava as chaves em arquivos PEM.
+
+5. except Exception as e:
+
+    try/except captura qualquer exceção (classe base Exception).
+
+    e — objeto que descreve a exceção. Evite usar except Exception em produção sem tratamento específico, mas é comum em scripts.
+
+6. arquivo = input("Digite o nome do arquivo para salvar a mensagem criptografada: ").strip()
+
+    Nome do arquivo onde será salvo o conteúdo (original + cifrado).
+
+7. last_arquivo = arquivo — guarda para uso posterior.
+
+8. mensagem = input("Digite a mensagem a ser criptografada: ").strip()
+
+    Lê mensagem a ser cifrada.
+
+9. with open(arquivo, "w", encoding="utf-8") as f:
+
+    Abre/cria o arquivo em modo texto para escrita (w) com codificação UTF-8.
+
+10. f.write("Mensagem original:\n") / f.write(mensagem + "\n\n")
+
+    f.write(...) grava strings no arquivo.
+
+11. cifrada_b64 = criptografar_texto(mensagem, public_key)
+
+    Usa função definida antes para cifrar e receber base64.
+
+12. print(cifrada_b64) — imprime a string em base64.
+
+13.with open(arquivo, "a", encoding="utf-8") as f:
+
+    open(..., "a") — append: abre o arquivo para adicionar conteúdo ao final sem sobrescrever.
+
+## Opção 2 — descriptografar última mensagem da sessão
+
+1. elif input_opcao == '2': — ramo para descriptografia interna.
+
+2. if cifrada_b64 is None: — verifica se existe mensagem cifrada armazenada.
+
+3. decifrada = descriptografar_texto(cifrada_b64, private_key)
+
+    Chama a função de descriptografia com a chave privada gerada anteriormente.
+
+4. except Exception as e: — trata erros na descriptografia. Erros comuns: padding incorreto, chave errada, dados corrompidos.
+
+5. with open(arquivo, "a", encoding="utf-8") as f: — registra a mensagem decifrada no arquivo (append).
+
+6. iniciar = input("\nDeseja criptografar outra mensagem? (s/n): ").strip().lower()
+
+    Pergunta se quer continuar; sobrescreve iniciar, que controla o while externo.
+
+## Opção 3 — descriptografar mensagem externa
+
+1. elif input_opcao == '3': — descriptografar usando chave privada externa.
+
+2. entrada = ler_entrada_multilinha("Cole a chave PRIVADA ...").strip()
+
+    Permite colar PEM (multilinha) ou fornecer caminho de arquivo. .strip() normaliza.
+
+3. if os.path.exists(entrada):
+
+    os.path.exists(...) — retorna True se existe um arquivo/caminho com esse nome. Serve para detectar se a entrada é caminho de arquivo.
+
+4. chave_priv_ext = carregar_chave_privada(entrada)
+
+    Se for caminho, carrega key do arquivo.
+
+5. chave_priv_ext = importar_chave_privada_de_texto(entrada)
+
+    Se não for caminho, tenta interpretar a entrada como PEM textual e importar a chave.
+
+6. entrada_b64 = input("Informe a mensagem criptografada (base64): ").strip()
+
+    Pede o ciphertext em base64 (uma linha).
+
+7. decifrada = descriptografar_texto(entrada_b64, chave_priv_ext)
+
+    Descriptografa usando a chave externa fornecida/importada.
+
+8. except Exception as e: — captura erros (arquivo inexistente, PEM inválido, ciphertext inválido, padding/chave incompatível).
+
+## Opção 4 — Sair
+
+1. elif input_opcao == '4': — sai do loop com break.
+
+## Final
+
+1. print("Encerrando o programa.") — mensagem final.
