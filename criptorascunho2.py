@@ -27,7 +27,7 @@ def criptografar_texto(texto: str, chave_publica: RSA.RsaKey) -> str:
     bytes_cifrados = cipher.encrypt(texto.encode("utf-8")) # ! Cifra os bytes do texto
     return base64.b64encode(bytes_cifrados).decode("utf-8") # ! Retorna o texto cifrado em base64
 
-def descriptografar_texto(b64_cifrado: str, chave_privada: RSA.RsaKey) -> str:
+def decriptografar_texto(b64_cifrado: str, chave_privada: RSA.RsaKey) -> str:
     """
     Descriptografa um texto base64 com RSA-OAEP usando a chave privada.
 
@@ -36,7 +36,7 @@ def descriptografar_texto(b64_cifrado: str, chave_privada: RSA.RsaKey) -> str:
     """
     cipher = PKCS1_OAEP.new(chave_privada) # ! Cria o objeto de cifra com a chave privada
     bytes_cifrados = base64.b64decode(b64_cifrado.encode("utf-8")) # ! Decodifica o texto base64 para bytes
-    bytes_originais = cipher.decrypt(bytes_cifrados) # ! Descriptografa os bytes cifrados
+    bytes_originais = cipher.decrypt(bytes_cifrados) # ! Decriptografa os bytes cifrados
     return bytes_originais.decode("utf-8")
 
 def carregar_chave_privada(caminho: str) -> RSA.RsaKey:
@@ -148,14 +148,14 @@ if __name__ == "__main__":
                 f.write(cifrada_b64 + "\n\n")
 
         elif input_opcao == '2':
-            # ! Descriptografa a última mensagem cifrada nesta sessão (mesmas chaves)
+            # ! Decriptografa a última mensagem cifrada nesta sessão (mesmas chaves)
             if cifrada_b64 is None:
-                print("Nenhuma mensagem criptografada disponível. Não é possível realizar a descriptografia.")
+                print("Nenhuma mensagem criptografada disponível. Não é possível realizar a decriptografia.")
             else:
                 try:
-                    decifrada = descriptografar_texto(cifrada_b64, private_key) # ! Descriptografa usando a chave privada gerada anteriormente
-                except Exception as e: # ! Trata erros na descriptografia
-                    print("Erro ao descriptografar:", e)
+                    decifrada = decriptografar_texto(cifrada_b64, private_key) # ! Decriptografa usando a chave privada gerada anteriormente
+                except Exception as e: # ! Trata erros na decriptografia
+                    print("Erro ao decriptografar:", e)
                 else:
                     print("\n🔓 Mensagem decifrada:")
                     print(decifrada)
@@ -166,7 +166,7 @@ if __name__ == "__main__":
                 iniciar = input("\nDeseja criptografar outra mensagem? (s/n): ").strip().lower()
 
         elif input_opcao == '3':
-            # ! Descriptografa mensagem EXTERNA: permite colar a chave privada PEM
+            # ! Decriptografa mensagem EXTERNA: permite colar a chave privada PEM
             # ! completa (BEGIN/END) ou informar o caminho do arquivo PEM.
             entrada = ler_entrada_multilinha(
                 "Cole a chave PRIVADA em formato PEM OU digite o caminho do arquivo:"
@@ -178,9 +178,9 @@ if __name__ == "__main__":
                     chave_priv_ext = importar_chave_privada_de_texto(entrada) # ! SE a entrada não for um arquivo, importa como texto PEM
                 # ! Aceita o ciphertext em base64 (uma linha). Remova espaços/linhas extras.
                 entrada_b64 = input("Informe a mensagem criptografada (base64): ").strip()
-                decifrada = descriptografar_texto(entrada_b64, chave_priv_ext) # ! Descriptografa com a chave externa
+                decifrada = decriptografar_texto(entrada_b64, chave_priv_ext) # ! Decriptografa com a chave externa
             except Exception as e:
-                print("Erro ao descriptografar mensagem externa:", e)
+                print("Erro ao decriptografar mensagem externa:", e)
             else:
                 print("\n🔓 Mensagem decifrada (externa):")
                 print(decifrada)

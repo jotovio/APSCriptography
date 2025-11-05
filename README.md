@@ -26,6 +26,13 @@ git commit -m "Descrição do que foi feito".
 7. Envie a branch criada para o repositório remoto no GitHub com:  
 git push origin nome-da-branch.
 
+## Instalação de Pacotes
+
+1. pip install pycryptodome
+
+2. py -m pip install pycryptodome
+
+3. py -m Crypto.SelfTest
 
 ## Para o colaborador visualizar as novas alterações
 
